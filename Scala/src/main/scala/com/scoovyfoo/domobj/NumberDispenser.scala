@@ -8,7 +8,7 @@ package com.scoovyfoo.domobj
  */
 
 class NumberDispenser(startingNumber: Int) {
-  def numberStream(num: Int): Stream[Int] =
+  private def numberStream(num: Int): Stream[Int] =
     num #:: numberStream(num + 1)
 
   private var nextNumberStream = numberStream(startingNumber)
@@ -17,5 +17,10 @@ class NumberDispenser(startingNumber: Int) {
     val nextNum = nextNumberStream.head;
     nextNumberStream = nextNumberStream.tail
     nextNum
+  }
+
+  def reset (resetTo: Int) = {
+    nextNumberStream = numberStream(resetTo)
+    thiss
   }
 }
