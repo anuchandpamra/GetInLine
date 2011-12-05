@@ -23,7 +23,7 @@ class TokenDispenser(startingNumber: Int) {
       loop {
         react {
           case ("DISPENSE", actor : Actor) => {
-            actor ! nextNumberStream.head;
+            actor ! nextNumberStream.head
             nextNumberStream = nextNumberStream.tail
           }
           case ("RESET", resetTo: Int) => {
