@@ -29,6 +29,9 @@ class TokenDispenser(startingNumber: Int) {
           case ("RESET", resetTo: Int) => {
             nextNumberStream = numberStream(resetTo)
           }
+          case ("PEEK", actor : Actor) => {
+            actor !  nextNumberStream.head
+          }
         }
       }
     }
@@ -39,8 +42,12 @@ class TokenDispenser(startingNumber: Int) {
       this
   }
   def nextNumber: Int = {
-    val msg = ("DISPENSE",self)
-    NumberDispenser ! msg
+    NumberDispenser ! ("DISPENSE",self)
+    self.receive {case nextNum:Int => nextNum}
+  }
+
+  def peek: Int  = {
+    NumberDispenser ! ("PEEK",self)
     self.receive {case nextNum:Int => nextNum}
   }
 

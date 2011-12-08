@@ -46,4 +46,23 @@ class TokenDispenserTest {
     }
   }
 
+  @Test
+  def testPeek() {
+    val a = new TokenDispenser(1304)
+    assertEquals(1304, a.peek)
+    assertEquals(1304, a.peek)
+    assertEquals(1304, a.peek)
+    a.nextNumber
+    a.nextNumber
+    assertEquals(1306, a.peek)
+    val actorTwo = actor {
+      a.nextNumber
+      a.nextNumber
+      a.nextNumber
+    }
+    // Let the other thread finish so sleep for a while.
+    Thread.sleep(100)
+    assertEquals(1309, a.peek)
+  }
+
 }

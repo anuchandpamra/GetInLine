@@ -69,7 +69,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.7</version>
+      <version>4.8.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -90,6 +90,12 @@
       <artifactId>scala-compiler</artifactId>
       <version>${scala.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>Scala</groupId>
+      <artifactId>Scala</artifactId>
+      <version>1.0</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 
