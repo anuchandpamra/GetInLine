@@ -46,6 +46,7 @@ class TokenDispenser(startingNumber: Int) {
     self.receive {case nextNum:Int => nextNum}
   }
 
+  // Just peeks at the next number without getting it
   def peek: Int  = {
     NumberDispenser ! ("PEEK",self)
     self.receive {case nextNum:Int => nextNum}

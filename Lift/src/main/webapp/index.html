@@ -1,9 +1,18 @@
 <div class="lift:surround?with=default;at=content">
-  <h2>Welcome to Virtual Queue!</h2>
-  <p>
+    <h2>Welcome to Virtual Queue!</h2>
+
+    <p>
+
     <div class="lift:tokenObserver">
-      Next available Number is <span id="token">The next token</span>
+        Next available Number is <span id="token">The next token</span>
     </div>
-  </p>
+    <form class="lift:form.ajax">
+        <div class="lift:TokenDispenser">
+            <span class="lift:Msg?id=myToken">Token Number</span><br/>
+            <span id="hidden"></span>
+            <input type="submit" value="Submit"/>
+        </div>
+    </form>
+    </p>
 </div>
 
