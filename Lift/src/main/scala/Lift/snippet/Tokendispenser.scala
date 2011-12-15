@@ -23,7 +23,7 @@ object TokenDispenser {
     // JsCmd which will be sent back to the browser
     // as part of the response
     def process() : JsCmd= {
-      S.notice("myToken", "Your token Number is: "+AQueue.tokenDispenser.nextNumber.toString)
+      S.notice("myToken", "Your token Number is: "+AQueue.tokenDispenser.dispense.toString)
       TokenRefresher ! "R"
       Noop
     }
