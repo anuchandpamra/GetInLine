@@ -1,10 +1,13 @@
 package Scala.com.scoovyfoo.domobj
 
-import org.junit.Test;
-import org.junit.Assert.assertEquals
-import com.scoovyfoo.domobj.TokenDispenser
+import org.scalatest.{BeforeAndAfter, FunSuite}
+import org.scalatest.junit.JUnitRunner
+import org.junit.runner.RunWith
 import actors.Actor._
-;
+import actors.Actor.self
+import actors.Actor
+import com.scoovyfoo.domobj.TokenDispenser
+
 
 /**
  *
@@ -13,56 +16,93 @@ import actors.Actor._
  * Time: 3:49 PM
  */
 
-class TokenDispenserTest {
-  @Test
-  def testNextNumber() {
-    val a = new TokenDispenser(1304)
-    assertEquals(1304, a.nextNumber)
-    assertEquals(1305, a.nextNumber)
-    assertEquals(1306, a.nextNumber)
+@RunWith(classOf[JUnitRunner])
+class TokenDispenserTest extends FunSuite with BeforeAndAfter {
+  private val tokenDispenser = new TokenDispenser(100)
+
+  before {
+    tokenDispenser.reset(1304)
+  }
+
+
+  test("dispense") {
+    assert(1304 == tokenDispenser.dispense.number)
+    assert(1305 == tokenDispenser.dispense.number)
+    assert(1306 == tokenDispenser.dispense.number)
 
     for (i <- 1307 to 101307)
-      assertEquals(i, a.nextNumber)
+      assert(i == tokenDispenser.dispense.number)
   }
 
-  @Test
-  def testReset() {
-    val a = new TokenDispenser(1304)
-    assertEquals(1, a.reset(1).nextNumber)
-    assertEquals(2, a.nextNumber)
-    assertEquals(3, a.nextNumber)
+  test("reset") {
+    assert(1 == tokenDispenser.reset(1).dispense.number)
+    assert(2 == tokenDispenser.dispense.number)
+    assert(3 == tokenDispenser.dispense.number)
   }
 
-  @Test
-  def testMultiThreaded() {
-    val a = new TokenDispenser(100)
+  test("MultiThreaded") {
+    import collection.mutable.Map
+
+    val aMap: Map[tokenDispenser.Token, String] = Map()
+    // Create the first thread and make it start by sending a message of type tuple that has the "START" string and
+    // the requesting thread
     val actorOne = actor {
-      for (i <- 1 to 100)
-        println("ActorOne => " + a.nextNumber)
+      react {
+        case ("START", requester: Actor) => {
+          //
+          for (i <- 1 to 100) {
+            requester ! (tokenDispenser.dispense, "ActorOne" )
+          }
+          requester ! "EXIT"
+        }
+      }
     }
+    // Create the second thread and start it just like the first thread
     val actorTwo = actor {
-      for (i <- 1 to 100)
-        println("ActorTwo => " + a.nextNumber)
+      react {
+        case ("START", requester: Actor) =>{
+          for (i <- 1 to 100) {
+            requester ! (tokenDispenser.dispense, "ActorTwo")
+          }
+          requester ! "EXIT"
+        }
+      }
     }
+
+    actorOne ! ("START", self)
+    actorTwo ! ("START", self)
+    var numActorsRunning = 2
+
+    do {
+      receive {
+        case "EXIT" => numActorsRunning -= 1
+        case (t: tokenDispenser.Token, s: String) => {
+          intercept[NoSuchElementException] {
+            try{aMap(t)} catch {case ex:NoSuchElementException => {aMap += (t -> s); throw ex} }
+          }
+        }
+      }
+    } while (numActorsRunning > 0)
+
+    assert(200 == aMap.size)
+
   }
 
-  @Test
-  def testPeek() {
-    val a = new TokenDispenser(1304)
-    assertEquals(1304, a.peek)
-    assertEquals(1304, a.peek)
-    assertEquals(1304, a.peek)
-    a.nextNumber
-    a.nextNumber
-    assertEquals(1306, a.peek)
+  test("Peek") {
+    assert(1304 == tokenDispenser.peek)
+    assert(1304 == tokenDispenser.peek)
+    assert(1304 == tokenDispenser.peek)
+    assert(tokenDispenser.dispense != tokenDispenser.dispense)
+    assert(1306 == tokenDispenser.peek)
     val actorTwo = actor {
-      a.nextNumber
-      a.nextNumber
-      a.nextNumber
+      tokenDispenser.dispense
+      tokenDispenser.dispense
+      tokenDispenser.dispense
+
     }
     // Let the other thread finish so sleep for a while.
     Thread.sleep(100)
-    assertEquals(1309, a.peek)
+    assert(1309 == tokenDispenser.peek)
   }
 
 }

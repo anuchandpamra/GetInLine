@@ -14,43 +14,46 @@ class TokenDispenser(startingNumber: Int) {
   NumberDispenser.start()
 
   private object NumberDispenser extends Actor {
-    private def numberStream(num: Int): Stream[Int] =
-      num #:: numberStream(num + 1)
+    private def numberStream(num: Int): Stream[Int] = num #:: numberStream(num + 1)
 
     private var nextNumberStream = numberStream(startingNumber)
 
     def act() {
       loop {
         react {
-          case ("DISPENSE", actor : Actor) => {
+          case ("DISPENSE", actor: Actor) => {
             actor ! nextNumberStream.head
             nextNumberStream = nextNumberStream.tail
           }
-          case ("RESET", resetTo: Int) => {
-            nextNumberStream = numberStream(resetTo)
-          }
-          case ("PEEK", actor : Actor) => {
-            actor !  nextNumberStream.head
-          }
+          case ("RESET", resetTo: Int) => nextNumberStream = numberStream(resetTo)
+          case ("PEEK", actor: Actor) => actor ! nextNumberStream.head
         }
       }
     }
   }
 
-  def reset(resetTo: Int) = {
-      NumberDispenser ! ("RESET",resetTo)
-      this
+  case class Token private[TokenDispenser](number: Int) {
+    private[TokenDispenser] def copy: Token = throw new Error
   }
-  def nextNumber: Int = {
-    NumberDispenser ! ("DISPENSE",self)
-    self.receive {case nextNum:Int => nextNum}
+
+  def reset(resetTo: Int) = {
+    NumberDispenser !("RESET", resetTo)
+    this
+  }
+
+  def dispense: Token = {
+    NumberDispenser !("DISPENSE", self)
+    self.receive {
+      case nextNum: Int => Token(nextNum)
+    }
   }
 
   // Just peeks at the next number without getting it
-  def peek: Int  = {
-    NumberDispenser ! ("PEEK",self)
-    self.receive {case nextNum:Int => nextNum}
+  def peek: Int = {
+    NumberDispenser !("PEEK", self)
+    self.receive {
+      case nextNum: Int => nextNum
+    }
   }
-
 
 }
