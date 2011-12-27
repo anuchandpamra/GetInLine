@@ -30,6 +30,7 @@ import Lift.model.AQueue
 import Lift.model.AQueue._
 import net.liftweb.json.JsonAST.JValue
 import xml.Node
+import net.liftweb.http.PlainTextResponse
 
 /**
  *
@@ -42,5 +43,6 @@ object WebSvcTokenDispenser extends RestHelper {
   serve {
     case "dispense" :: "token" :: Nil JsonGet _ => AQueue.dispenseAToken: JValue
     case "dispense" :: "token" :: Nil XmlGet _ => AQueue.dispenseAToken: Node
+    case "dispense" :: "token" :: Nil Get _ => AQueue.dispenseAToken: PlainTextResponse
   }
 }

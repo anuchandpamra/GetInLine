@@ -30,6 +30,7 @@ import Lift.comet.TokenRefresher
 import net.liftweb.json.JsonAST.JValue
 import xml.Node
 import net.liftweb.json.{Xml, Extraction}
+import net.liftweb.http.PlainTextResponse
 
 /**
  *
@@ -54,4 +55,6 @@ object AQueue {
   implicit def toXml(token: tokenDispenser.Token): Node = <token>
     {Xml.toXml(token)}
   </token>
+
+  implicit def toPlainText(token: tokenDispenser.Token): PlainTextResponse = PlainTextResponse(token.toString)
 }
