@@ -46,7 +46,12 @@ object AQueue {
     TokenRefresher ! "R"
     token
   }
+
   private implicit val formats = net.liftweb.json.DefaultFormats
-  implicit def toJson (token : tokenDispenser.Token) : JValue = Extraction.decompose(token)
-  implicit def toXml  (token : tokenDispenser.Token) : Node  = <token>{Xml.toXml(token)}</token>
+
+  implicit def toJson(token: tokenDispenser.Token): JValue = Extraction.decompose(token)
+
+  implicit def toXml(token: tokenDispenser.Token): Node = <token>
+    {Xml.toXml(token)}
+  </token>
 }

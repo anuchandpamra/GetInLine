@@ -31,12 +31,12 @@ import java.io.DataOutputStream
 import net.liftweb.http.{RemoveAListener, AddAListener}
 
 /**
- * 
+ *
  * User: Anupam Chandra
  * Date: 12/21/11
  * Time: 12:42 PM
  */
-case class SocketBasedTokenObserver (socket: Socket) extends LiftActor{
+case class SocketBasedTokenObserver(socket: Socket) extends LiftActor {
   TokenRefresher ! AddAListener(this)
   val out = new DataOutputStream(socket.getOutputStream())
 
@@ -49,7 +49,7 @@ case class SocketBasedTokenObserver (socket: Socket) extends LiftActor{
   override def exceptionHandler = {
     case e: SocketException => TokenRefresher ! RemoveAListener(this)
     case _ => {
-      if (socket.isConnected){
+      if (socket.isConnected) {
         if (!socket.isOutputShutdown) out.close()
         socket.close()
       }

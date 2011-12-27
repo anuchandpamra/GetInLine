@@ -1,4 +1,3 @@
-import _root_.org.mortbay.jetty.Connector
 import _root_.org.mortbay.jetty.Server
 import _root_.org.mortbay.jetty.webapp.WebAppContext
 import org.mortbay.jetty.nio._
@@ -25,7 +24,7 @@ object RunWebApp extends App {
     server.stop()
     server.join()
   } catch {
-    case exc : Exception => {
+    case exc: Exception => {
       exc.printStackTrace()
       System.exit(100)
     }
