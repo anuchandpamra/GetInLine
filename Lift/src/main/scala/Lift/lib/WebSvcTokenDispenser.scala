@@ -23,30 +23,24 @@
  * MODIFICATIONS.                                                             *
  ******************************************************************************/
 
-package Lift.model
+package Lift.lib
 
-import com.scoovyfoo.domobj.TokenDispenser
-import Lift.comet.TokenRefresher
+import net.liftweb.http.rest.RestHelper
+import Lift.model.AQueue
+import Lift.model.AQueue._
 import net.liftweb.json.JsonAST.JValue
 import xml.Node
-import net.liftweb.json.{Xml, Extraction}
 
 /**
  *
  * User: Anupam Chandra
- * Date: 12/7/11
- * Time: 10:16 PM
+ * Date: 12/26/11
+ * Time: 10:33 PM
  */
 
-object AQueue {
-  val tokenDispenser = new TokenDispenser(100)
-
-  def dispenseAToken = {
-    val token = tokenDispenser.dispense
-    TokenRefresher ! "R"
-    token
+object WebSvcTokenDispenser extends RestHelper {
+  serve {
+    case "dispense" :: "token" :: Nil JsonGet _ => AQueue.dispenseAToken: JValue
+    case "dispense" :: "token" :: Nil XmlGet _ => AQueue.dispenseAToken: Node
   }
-  private implicit val formats = net.liftweb.json.DefaultFormats
-  implicit def toJson (token : tokenDispenser.Token) : JValue = Extraction.decompose(token)
-  implicit def toXml  (token : tokenDispenser.Token) : Node  = <token>{Xml.toXml(token)}</token>
 }

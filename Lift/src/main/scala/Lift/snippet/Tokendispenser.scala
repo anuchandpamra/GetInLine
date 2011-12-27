@@ -31,7 +31,6 @@ import http._
 import util.Helpers._
 import js._
 import JsCmds._
-import Lift.comet.TokenRefresher
 
 
 /**
@@ -48,8 +47,7 @@ object TokenDispenser {
     // JsCmd which will be sent back to the browser
     // as part of the response
     def process() : JsCmd= {
-      S.notice("myToken", "Your token Number is: "+AQueue.tokenDispenser.dispense.toString)
-      TokenRefresher ! "R"
+      S.notice("myToken", "Your token Number is: "+AQueue.dispenseAToken.toString)
       Noop
     }
 

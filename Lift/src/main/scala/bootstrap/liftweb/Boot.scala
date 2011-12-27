@@ -4,7 +4,12 @@ import _root_.net.liftweb.common._
 import _root_.net.liftweb.http._
 import _root_.net.liftweb.http.provider._
 import _root_.net.liftweb.sitemap._
-import _root_.Lift.model._
+import actors.Actor._
+import java.net.ServerSocket
+import java.io.IOException
+import Lift.comet.SocketBasedTokenObserver
+import net.liftweb.util.Props
+import Lift.lib.WebSvcTokenDispenser
 
 
 /**
@@ -12,6 +17,18 @@ import _root_.Lift.model._
  * to modify lift's environment
  */
 class Boot {
+  private val socketServer = actor {
+    val port = Props.getInt("socketBasedTokenObserver.port", 7777)
+    try {
+      val listener = new ServerSocket(port)
+      while (true) SocketBasedTokenObserver(listener.accept())
+      listener.close()
+    }
+    catch {
+      case e: IOException => System.err.println("Could not connect to port: " + port)
+    }
+  }
+
   def boot {
     // where to search snippet
     LiftRules.addToPackages("Lift")
@@ -34,6 +51,7 @@ class Boot {
     LiftRules.ajaxEnd =
       Full(() => LiftRules.jsArtifacts.hide("ajax-loader").cmd)
 
+    LiftRules.statelessDispatchTable.append(WebSvcTokenDispenser)
     LiftRules.early.append(makeUtf8)
   }
 

@@ -23,30 +23,38 @@
  * MODIFICATIONS.                                                             *
  ******************************************************************************/
 
-package Lift.model
+package Lift
 
-import com.scoovyfoo.domobj.TokenDispenser
-import Lift.comet.TokenRefresher
-import net.liftweb.json.JsonAST.JValue
-import xml.Node
-import net.liftweb.json.{Xml, Extraction}
+import java.net.{Socket, InetAddress}
+import java.io.{IOException, DataInputStream, DataOutputStream, ObjectOutputStream}
 
 /**
- *
+ * 
  * User: Anupam Chandra
- * Date: 12/7/11
- * Time: 10:16 PM
+ * Date: 12/21/11
+ * Time: 5:45 PM
  */
 
-object AQueue {
-  val tokenDispenser = new TokenDispenser(100)
+object SocketTest {
+  def main(args: Array[String]) {
+    try {
+      val ia = InetAddress.getByName("localhost")
+      val socket = new Socket(ia, 7201)
 
-  def dispenseAToken = {
-    val token = tokenDispenser.dispense
-    TokenRefresher ! "R"
-    token
+      val in = new DataInputStream(socket.getInputStream())
+
+      var i = 20
+      while (i > 0) {
+        val x = in.readInt()
+        println("x = " + x)
+        i -= 1
+      }
+      in.close()
+      socket.close()
+    }
+    catch {
+      case e: IOException =>
+        e.printStackTrace()
+    }
   }
-  private implicit val formats = net.liftweb.json.DefaultFormats
-  implicit def toJson (token : tokenDispenser.Token) : JValue = Extraction.decompose(token)
-  implicit def toXml  (token : tokenDispenser.Token) : Node  = <token>{Xml.toXml(token)}</token>
 }

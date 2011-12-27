@@ -23,30 +23,38 @@
  * MODIFICATIONS.                                                             *
  ******************************************************************************/
 
-package Lift.model
+package Lift.comet
 
-import com.scoovyfoo.domobj.TokenDispenser
-import Lift.comet.TokenRefresher
-import net.liftweb.json.JsonAST.JValue
-import xml.Node
-import net.liftweb.json.{Xml, Extraction}
+import net.liftweb.actor.LiftActor
+import java.net.{SocketException, Socket}
+import java.io.DataOutputStream
+import net.liftweb.http.{RemoveAListener, AddAListener}
 
 /**
- *
+ * 
  * User: Anupam Chandra
- * Date: 12/7/11
- * Time: 10:16 PM
+ * Date: 12/21/11
+ * Time: 12:42 PM
  */
+case class SocketBasedTokenObserver (socket: Socket) extends LiftActor{
+  TokenRefresher ! AddAListener(this)
+  val out = new DataOutputStream(socket.getOutputStream())
 
-object AQueue {
-  val tokenDispenser = new TokenDispenser(100)
-
-  def dispenseAToken = {
-    val token = tokenDispenser.dispense
-    TokenRefresher ! "R"
-    token
+  def messageHandler = {
+    case x: Int => {
+      out.writeInt(x)
+    }
   }
-  private implicit val formats = net.liftweb.json.DefaultFormats
-  implicit def toJson (token : tokenDispenser.Token) : JValue = Extraction.decompose(token)
-  implicit def toXml  (token : tokenDispenser.Token) : Node  = <token>{Xml.toXml(token)}</token>
+
+  override def exceptionHandler = {
+    case e: SocketException => TokenRefresher ! RemoveAListener(this)
+    case _ => {
+      if (socket.isConnected){
+        if (!socket.isOutputShutdown) out.close()
+        socket.close()
+      }
+      TokenRefresher ! RemoveAListener(this)
+      super.exceptionHandler
+    }
+  }
 }
