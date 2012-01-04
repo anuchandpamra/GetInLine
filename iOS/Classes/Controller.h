@@ -13,7 +13,7 @@
 	IBOutlet UILabel *nextAvailableToken; // Label to show the next available token number
 	IBOutlet UILabel *myTokenNumber; // Label to show the our latest token number
 	QueueServerSocketConnection* connection; // Socket Connect
-
+    NSMutableData* myTokenBuffer;
 }
 
 - (IBAction)getNextToken:sender;

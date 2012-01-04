@@ -27,7 +27,7 @@
 	NSDictionary *dictionary = [jsonString JSONValue];
 	NSLog(@"Dictionary value for \"foo\" is \"%@\"", [dictionary objectForKey:@"foo"]);
 	
-	connection = [[QueueServerSocketConnection alloc] init:@"ec2-184-72-133-78.compute-1.amazonaws.com" andPort:7201];
+	connection = [[QueueServerSocketConnection alloc] init:@"ec2-107-22-39-160.compute-1.amazonaws.com" andPort:7201];
 	connection.listener = self;
 	[connection connect];
 }
@@ -35,6 +35,7 @@
 // Cleanup
 - (void)dealloc {
 	self.connection = nil;
+	[myTokenBuffer release];
 	[super dealloc];
 }
 
@@ -48,12 +49,36 @@
 }
 
 - (void) receiveNewToken:(int)token {
-	
-	nextAvailableToken.text = [NSString stringWithFormat:@"%i", token];	
+	nextAvailableToken.text = [NSString stringWithFormat:@"%d", token];	
 }
 
 - (IBAction)getNextToken:sender {
-	int num = arc4random() % 100;
-	myTokenNumber.text = [NSString stringWithFormat:@"%i", num];
+	NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://ec2-107-22-39-160.compute-1.amazonaws.com:8080/Lift-1.0/dispense/token.json"]];
+	myTokenBuffer =[[NSMutableData alloc] init];
+	[[NSURLConnection alloc] initWithRequest:request delegate:self];
+	//myTokenNumber.text = [NSString stringWithFormat:@"%i", num];
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
+	[myTokenBuffer setLength:0];
+}
+
+- (void)connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
+	[myTokenBuffer appendData:data];
+}
+
+- (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
+	myTokenNumber.text = [NSString stringWithFormat:@"Connection failed: %@", [error description]];
+}
+
+- (void)connectionDidFinishLoading:(NSURLConnection *)conn {
+	[conn release];
+	
+	NSString *responseString = [[NSString alloc] initWithData:myTokenBuffer encoding:NSUTF8StringEncoding];
+	[myTokenBuffer release];
+	
+	NSLog(@"response Strin ====> %@", responseString);
+	NSDictionary *dictionary = [responseString JSONValue];
+	myTokenNumber.text = [NSString stringWithFormat:@"%@", [dictionary objectForKey:@"number"]];
 }
 @end

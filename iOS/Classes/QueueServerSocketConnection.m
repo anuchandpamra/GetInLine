@@ -211,7 +211,7 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 			memcpy(&tokenNumber, [incomingDataBuffer bytes], sizeof(int));
 			
 			// Send the token number to the listener
-			[listener receiveNewToken:tokenNumber];
+			[listener receiveNewToken:CFSwapInt32BigToHost(tokenNumber)];
 			
 			// remove that chunk from buffer
 			NSRange rangeToDelete = {0, sizeof(int)};
