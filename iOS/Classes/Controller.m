@@ -16,6 +16,7 @@
 
 @end
 
+NSString * const hostDNS = @"ec2-174-129-160-102.compute-1.amazonaws.com";
 
 @implementation Controller
 
@@ -23,11 +24,7 @@
 
 // Called after all the GUI items have been instantiated
 - (void) awakeFromNib{
-	NSString *jsonString = [NSString stringWithString:@"{\"foo\": \"bar\"}"];
-	NSDictionary *dictionary = [jsonString JSONValue];
-	NSLog(@"Dictionary value for \"foo\" is \"%@\"", [dictionary objectForKey:@"foo"]);
-	
-	connection = [[QueueServerSocketConnection alloc] init:@"ec2-107-22-39-160.compute-1.amazonaws.com" andPort:7201];
+	connection = [[QueueServerSocketConnection alloc] init:hostDNS andPort:7201];
 	connection.listener = self;
 	[connection connect];
 }
@@ -53,10 +50,9 @@
 }
 
 - (IBAction)getNextToken:sender {
-	NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://ec2-107-22-39-160.compute-1.amazonaws.com:8080/Lift-1.0/dispense/token.json"]];
+	NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://%@:8080/Lift-1.0/dispense/token.json", hostDNS]]];
 	myTokenBuffer =[[NSMutableData alloc] init];
 	[[NSURLConnection alloc] initWithRequest:request delegate:self];
-	//myTokenNumber.text = [NSString stringWithFormat:@"%i", num];
 }
 
 - (void)connection:(NSURLConnection *)connection didReceiveResponse:(NSURLResponse *)response {
@@ -77,7 +73,6 @@
 	NSString *responseString = [[NSString alloc] initWithData:myTokenBuffer encoding:NSUTF8StringEncoding];
 	[myTokenBuffer release];
 	
-	NSLog(@"response Strin ====> %@", responseString);
 	NSDictionary *dictionary = [responseString JSONValue];
 	myTokenNumber.text = [NSString stringWithFormat:@"%@", [dictionary objectForKey:@"number"]];
 }

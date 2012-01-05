@@ -18,17 +18,12 @@
 	int port;
 		
 	// Stream to read 
-	CFReadStreamRef readStream;
-	bool readStreamOpen;
-	NSMutableData* incomingDataBuffer;
-	
-	// dummy write stream - we are not going to use it
-	CFWriteStreamRef dummyWriteStream;
-	
-	
+	CFReadStreamRef inputDataStream;
+	bool inputDataStreamOpen;
+	NSMutableData* inputDataBuffer;	
 }
 
-@property(nonatomic,retain) id<TokenListener> listener;
+@property(nonatomic,assign) id<TokenListener> listener;
 
 // Initialize
 - (id)init:(NSString*)host andPort:(int)port;
@@ -37,7 +32,7 @@
 - (BOOL)connect;
 
 // Close connection
-- (void)close;
+- (void)disconnect;
 
 
 @end

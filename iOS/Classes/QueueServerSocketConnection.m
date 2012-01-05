@@ -10,7 +10,7 @@
 
 
 // Declare C callback functions
-void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType, void *info);
+void inputDataStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType, void *info);
 
 // Private properties and methods
 @interface QueueServerSocketConnection ()
@@ -19,17 +19,17 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 @property(nonatomic,retain) NSString* host;
 @property(nonatomic,assign) int port;
 
-// Clean
-- (void)clean;
+// Reset Connection settings
+- (void)reset;
 
 //Setup socket streams after opening the socket
-- (BOOL)setupSocketStreams;
+- (BOOL)setupInputDataStream;
 
 // Stream event handlers
-- (void)readStreamHandleEvent:(CFStreamEventType)event;
+- (void)inputDataStreamHandleEvent:(CFStreamEventType)event;
 
 // Read all available bytes from the read stream into buffer and try to extract packets
-- (void)readFromStreamIntoIncomingBuffer;
+- (void)inputDataStreamToInputDataBuffer;
 
 
 
@@ -42,10 +42,10 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 @synthesize host, port;
 
 // Reset
-- (void)clean {  
-	readStream = nil;
-	readStreamOpen = NO;
-	incomingDataBuffer = nil;
+- (void)reset {  
+	inputDataStream = nil;
+	inputDataStreamOpen = NO;
+	inputDataBuffer = nil;
 	self.host = nil;
 }
 
@@ -60,7 +60,7 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 
 // Initialize
 - (id)init:(NSString*)_host andPort:(int)_port {
-	[self clean];
+	[self reset];
 	
 	self.host = _host;
 	self.port = _port;
@@ -74,9 +74,9 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 	if ( self.host != nil ) {
 		// Bind read/write streams to a new socket
 		CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (CFStringRef)self.host,
-										   self.port, &readStream, &dummyWriteStream);
+										   self.port, &inputDataStream, NULL);
 		
-		return [self setupSocketStreams];
+		return [self setupInputDataStream];
 	}
 	
 	// No host - cannot connect
@@ -85,38 +85,41 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 
 
 // Further setup socket streams that were created by one of our 'init' methods
-- (BOOL)setupSocketStreams {
+- (BOOL)setupInputDataStream {
 	// Make sure streams were created correctly
-	if ( readStream == nil ) {
-		[self close];
+	if ( inputDataStream == nil ) {
+		[self disconnect];
 		return NO;
 	}
 	
-	// Create buffers
-	incomingDataBuffer = [[NSMutableData alloc] init];
+	// Create buffer for reading data
+	inputDataBuffer = [[NSMutableData alloc] init];
 	
-	// Indicate that we want socket to be closed whenever streams are closed
-	CFReadStreamSetProperty(readStream, kCFStreamPropertyShouldCloseNativeSocket,
+	// Sockets should close when streams close
+	CFReadStreamSetProperty(inputDataStream, kCFStreamPropertyShouldCloseNativeSocket,
 							kCFBooleanTrue);
 	
-	// We will be handling the following stream events
-	CFOptionFlags registeredEvents = kCFStreamEventOpenCompleted |
-	kCFStreamEventHasBytesAvailable | kCFStreamEventCanAcceptBytes |
-	kCFStreamEventEndEncountered | kCFStreamEventErrorOccurred;
+	// Handle following stream events
+	CFOptionFlags registeredEvents = 
+	kCFStreamEventOpenCompleted |
+	kCFStreamEventHasBytesAvailable | 
+	kCFStreamEventCanAcceptBytes |
+	kCFStreamEventEndEncountered | 
+	kCFStreamEventErrorOccurred;
 	
 	// Setup stream context - reference to 'self' will be passed to stream event handling callbacks
 	CFStreamClientContext ctx = {0, self, NULL, NULL, NULL};
 	
 	// Specify callbacks that will be handling stream events
-	CFReadStreamSetClient(readStream, registeredEvents, readStreamEventHandler, &ctx);
+	CFReadStreamSetClient(inputDataStream, registeredEvents, inputDataStreamEventHandler, &ctx);
 	
 	// Schedule streams with current run loop
-	CFReadStreamScheduleWithRunLoop(readStream, CFRunLoopGetCurrent(),
+	CFReadStreamScheduleWithRunLoop(inputDataStream, CFRunLoopGetCurrent(),
 									kCFRunLoopCommonModes);
 	
-	// Open both streams
-	if ( ! CFReadStreamOpen(readStream)) {
-		[self close];
+	// Open read stream
+	if ( ! CFReadStreamOpen(inputDataStream)) {
+		[self disconnect];
 		return NO;
 	}
 	
@@ -125,54 +128,54 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 
 
 // Close connection
-- (void)close {
+- (void)disconnect {
 	// Cleanup read stream
-	if ( readStream != nil ) {
-		CFReadStreamUnscheduleFromRunLoop(readStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
-		CFReadStreamClose(readStream);
-		CFRelease(readStream);
-		readStream = NULL;
+	if ( inputDataStream != nil ) {
+		CFReadStreamUnscheduleFromRunLoop(inputDataStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
+		CFReadStreamClose(inputDataStream);
+		CFRelease(inputDataStream);
+		inputDataStream = NULL;
 	}
 	
 	
 	// Cleanup buffers
-	[incomingDataBuffer release];
-	incomingDataBuffer = NULL;
+	[inputDataBuffer release];
+	inputDataBuffer = NULL;
 	
 	
 	// Reset all other variables
-	[self clean];
+	[self reset];
 }
 
 
 #pragma mark Read stream methods
 
 // Dispatch readStream events
-void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
+void inputDataStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 							void *info) {
 	QueueServerSocketConnection* connection = (QueueServerSocketConnection*)info;
-	[connection readStreamHandleEvent:eventType];
+	[connection inputDataStreamHandleEvent:eventType];
 }
 
 
 // Handle events from the read stream
-- (void)readStreamHandleEvent:(CFStreamEventType)event {
-	// Stream successfully opened
+- (void)inputDataStreamHandleEvent:(CFStreamEventType)event {
+	// Stream opened
 	if ( event == kCFStreamEventOpenCompleted ) {
-		readStreamOpen = YES;
+		inputDataStreamOpen = YES;
 	}
-	// New data has arrived
+	// Data available for reading
 	else if ( event == kCFStreamEventHasBytesAvailable ) {
-		// Read as many bytes from the stream as possible and try to extract meaningful packets
-		[self readFromStreamIntoIncomingBuffer];
+		// Read as many bytes from the stream as possible; extract a token
+		[self inputDataStreamToInputDataBuffer];
 	}
 	// Connection has been terminated or error encountered (we treat them the same way)
 	else if ( event == kCFStreamEventEndEncountered || event == kCFStreamEventErrorOccurred ) {
 		// Clean everything up
-		[self close];
+		[self disconnect];
 		
 		// If we haven't connected yet then our connection attempt has failed
-		if ( !readStreamOpen) {
+		if ( !inputDataStreamOpen) {
 			[listener connectionAttemptFailed:self];
 		}
 		else {
@@ -182,40 +185,45 @@ void readStreamEventHandler(CFReadStreamRef stream, CFStreamEventType eventType,
 }
 
 
-// Read as many bytes from the stream as possible and try to extract meaningful packets
-- (void)readFromStreamIntoIncomingBuffer {
+// Read as many bytes from the stream as possible and get token numbers
+- (void)inputDataStreamToInputDataBuffer {
 	// Temporary buffer to read data into
 	UInt8 buf[1024];
 	int tokenNumber;
 	
 	// Try reading while there is data
-	while( CFReadStreamHasBytesAvailable(readStream) ) {  
-		CFIndex len = CFReadStreamRead(readStream, buf, sizeof(buf));
+	while( CFReadStreamHasBytesAvailable(inputDataStream) ) {  
+		CFIndex len = CFReadStreamRead(inputDataStream, buf, sizeof(buf));
 		if ( len <= 0 ) {
 			// Either stream was closed or error occurred. Close everything up and treat this as "connection terminated"
-			[self close];
+			[self disconnect];
 			[listener connectionTerminated:self];
 			return;
 		}
 		
-		[incomingDataBuffer appendBytes:buf length:len];
+		[inputDataBuffer appendBytes:buf length:len];
 	}
 	
 	// Try to extract token number from the buffer.	
 	// We might have more than one token in the buffer - that's why we'll be reading it inside the while loop
 	while( YES ) {
-		// Did we read the header yet?
-			// Do we have enough bytes in the buffer to read the header?
-		if ( [incomingDataBuffer length] >= sizeof(int) ) {
+		// If we got a complete integer, treat it as the next token number
+		if ( [inputDataBuffer length] >= sizeof(int) ) {
 			// extract token number
-			memcpy(&tokenNumber, [incomingDataBuffer bytes], sizeof(int));
+			memcpy(&tokenNumber, [inputDataBuffer bytes], sizeof(int));
 			
 			// Send the token number to the listener
-			[listener receiveNewToken:CFSwapInt32BigToHost(tokenNumber)];
+			//
+			if (CFByteOrderGetCurrent() == CFByteOrderLittleEndian){
+				[listener receiveNewToken:CFSwapInt32BigToHost(tokenNumber)];
+			}
+			else {
+				[listener receiveNewToken:tokenNumber];
+			}
 			
 			// remove that chunk from buffer
 			NSRange rangeToDelete = {0, sizeof(int)};
-			[incomingDataBuffer replaceBytesInRange:rangeToDelete withBytes:NULL length:0];
+			[inputDataBuffer replaceBytesInRange:rangeToDelete withBytes:NULL length:0];
 		}
 		else {
 			// We don't have enough yet. Will wait for more data.
