@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2011. SoftExcel Technologies Inc. (SoftExcel),               *
+ * Copyright (c) 2012. SoftExcel Technologies Inc. (SoftExcel),               *
  * Virginia. All Rights Reserved. Permission to use, copy, modify, and        *
  * distribute this software and its documentation for educational,            *
  * research, and not-for-profit purposes, without fee and without a           *
@@ -38,6 +38,7 @@ import java.io.{IOException, DataInputStream}
 object SocketTest {
   def main(args: Array[String]) {
     try {
+      //val ia = InetAddress.getByName("ec2-107-22-70-130.compute-1.amazonaws.com")
       val ia = InetAddress.getByName("localhost")
       val socket = new Socket(ia, 7201)
 

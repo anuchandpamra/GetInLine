@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2011. SoftExcel Technologies Inc. (SoftExcel),               *
+ * Copyright (c) 2012. SoftExcel Technologies Inc. (SoftExcel),               *
  * Virginia. All Rights Reserved. Permission to use, copy, modify, and        *
  * distribute this software and its documentation for educational,            *
  * research, and not-for-profit purposes, without fee and without a           *
@@ -29,6 +29,7 @@ import net.liftweb.actor.LiftActor
 import java.net.{SocketException, Socket}
 import java.io.DataOutputStream
 import net.liftweb.http.{RemoveAListener, AddAListener}
+import net.liftweb.common.Logger
 
 /**
  *
@@ -36,7 +37,8 @@ import net.liftweb.http.{RemoveAListener, AddAListener}
  * Date: 12/21/11
  * Time: 12:42 PM
  */
-case class SocketBasedTokenObserver(socket: Socket) extends LiftActor {
+case class SocketBasedTokenObserver(socket: Socket) extends LiftActor with Logger {
+  info("Adding a new Socket Connection. Max value of int is = " + Int.MaxValue)
   TokenRefresher ! AddAListener(this)
   val out = new DataOutputStream(socket.getOutputStream())
 
