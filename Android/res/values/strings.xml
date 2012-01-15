@@ -2,8 +2,8 @@
 <resources>
     <string name="app_name">Android</string>
     <string name="get_token_error">Unable to retrieve token!</string>
-    <string name="queue_server_dns">ec2-67-202-48-116.compute-1.amazonaws.com</string>
+    <string name="queue_server_dns">10.0.2.2</string>
     <string name="queue_server_port">:8080</string>
-    <string name="get_token_url">/Lift-1.0/dispense/token.json</string>
+    <string name="get_token_url">/dispense/token.json</string>
     <integer name="next_token_port">7201</integer>
 </resources>

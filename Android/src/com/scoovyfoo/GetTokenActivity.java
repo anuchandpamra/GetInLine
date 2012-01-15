@@ -21,19 +21,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.util.Random;
 
 public class GetTokenActivity extends Activity implements TokenListener {
-    // Logging
+    // Tag to be used for Logging messages
     private static final String TAG = "GetTokenActivity";
 
-    private TextView mNextAvailableToken;
-    private TextView mMyTokenNumber;
-
-    /**
-     * Just for testing
-     */
-    private static final Random RNG = new Random();
+    // Handle to the GUI components that we are going to manipulate in this
+    // class
+    private TextView mNextAvailableToken; // Label to display the next available token number
+    private TextView mMyTokenNumber; // Label to display the number of the current token I am holding
 
     /**
      * Called when the activity is first created.
@@ -44,22 +40,23 @@ public class GetTokenActivity extends Activity implements TokenListener {
         Log.i(TAG, "Entered OnCreate");
         setContentView(R.layout.main);
 
-        // Obtain handles to UI objects
+        // Obtain handles to GUI objects
         mNextAvailableToken = (TextView) findViewById(R.id.nextAvailableToken);
         mMyTokenNumber = (TextView) findViewById(R.id.myTokenNumber);
         Button lGetNextToken = (Button) findViewById(R.id.getNextToken);
 
+        // Set the callback for the button
         lGetNextToken.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 getNextToken();
             }
         });
 
-        // Bind to LocalService
+        // Bind to the service that will listen on a socket for the next available token number
         Intent intent = new Intent(this, QueueServerSocketConnection.class);
         bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+        // Now start the service
         startService(intent);
-
     }
 
     @Override
@@ -67,6 +64,8 @@ public class GetTokenActivity extends Activity implements TokenListener {
         super.onStop();
         // Unbind from the service
         unbindService(mConnection);
+        Intent intent = new Intent(this, QueueServerSocketConnection.class);
+        stopService(intent);
     }
 
     /**
@@ -109,16 +108,14 @@ public class GetTokenActivity extends Activity implements TokenListener {
         }
 
         public void onServiceDisconnected(ComponentName arg0) {
-
         }
     };
 
 
-    // Define the Handler that receives messages from the thread and update the progress
+    // Define the Handler that receives messages from the thread and update the nextAvailableToken
     private final Handler mHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            Log.d(TAG, "In handleMessage- handling a message");
             Integer token = (Integer) msg.obj;
             receiveNewToken(token);
         }
