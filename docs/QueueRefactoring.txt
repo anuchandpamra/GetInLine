@@ -1,0 +1,2 @@
+1. Add a Queue Class.
+2. Make TokenDispenser an inner private object of Queue class.

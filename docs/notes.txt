@@ -1,0 +1,24 @@
+The Queue
+==========
+
+1. It needs to have a list of QueueAttributes
+   1.1 Example of Queue Attributes are - Queue Owner, Queue Location in lat and lang, Queue Address, Queue Phone number
+
+2. The List of Queue Attribures could vary from one Queue to another. For e xample one queue might have only location and other might have only phone number. For example if the queue exists only on the phone (like when you call the customer service).
+
+3. A Queue needs to have a Token Dispenser
+
+4. Somehow we need to associate a token with the Queue that the token belongs to. e.g. in the token we need to mark the ID of the queue where the token was dispensed from
+
+5. Once some one requests a token from the queue we need to have tha ability where the person can get on the queue. So the queue needs to have a FIFO data structure that could hold the token or the person that requested that token.
+   5.1 what ever gets on the queue should have a mechanism where by it could be informed when or how soon its turn is going to arrive. A use case for this is for example you get on a queue that is a phone queue (you dial a call center), instead of holding the phone for a long time, you can provide a callback number and the queue will call that number as soon as your turn comes.
+
+6. A queue needs to be discoverable
+
+7. We need a queue renderer. Something that can draw a queue and show persons on the queue graphically
+
+8. We need a list of queue servers. These will serve the queue/
+
+9. We need a something that computes a queue statistics - someone who is watching the queue and can determine how soon your turn is going to come to be served.
+
+ 
